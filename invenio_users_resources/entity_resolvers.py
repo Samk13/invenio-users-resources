@@ -47,8 +47,10 @@ class UserProxy(EntityProxy):
         user_id = self._parse_ref_dict_id()
         if user_id == system_user_id:
             return [system_process]
-        else:
+        elif isinstance(user_id, str) and user_id.isdigit():
             return [UserNeed(int(user_id))]
+        else:
+            return []
 
     def ghost_record(self, value):
         """Return default representation of not resolved user."""
