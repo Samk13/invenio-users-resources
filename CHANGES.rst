@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version v9.0.1 (released 2025-09-24)
+
+- fix(entity_resolvers): handle `None` user entity
+
 Version v9.0.0 (released 2025-09-05)
 
 - BREAKING CHANGE: restrict access to users item endpoint. Return 404 instead of 403
