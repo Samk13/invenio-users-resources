@@ -9,6 +9,10 @@
 Changes
 =======
 
+Version v9.0.2 (released 2025-10-02)
+
+- fix(services.config): boost full_name for better results
+
 Version v9.0.1 (released 2025-09-24)
 
 - fix(entity_resolvers): handle `None` user entity
