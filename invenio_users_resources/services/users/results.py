@@ -11,6 +11,37 @@
 from invenio_records_resources.services.records.results import RecordItem, RecordList
 
 
+def _role_names(user):
+    """Return comma-separated role names."""
+    model = getattr(user, "model", user)
+    model_obj = getattr(model, "_model_obj", model)
+
+    roles = getattr(model_obj, "roles", None)
+    if not roles:
+        roles = getattr(user, "roles", None)
+    if not roles and isinstance(user, dict):
+        roles = user.get("roles")
+
+    if not roles:
+        return ""
+
+    if isinstance(roles, str):
+        return roles
+
+    names = sorted(role.name for role in roles if getattr(role, "name", None))
+    return ", ".join(names)
+
+
+def _apply_roles(payload, roles):
+    """Populate flat/profile role projections."""
+    payload["roles"] = roles
+    payload["roles_label"] = roles
+    profile = dict(payload.get("profile") or {})
+    profile["roles"] = roles
+    payload["profile"] = profile
+    return payload
+
+
 class UserItem(RecordItem):
     """Single user result."""
 
@@ -65,6 +96,8 @@ class UserItem(RecordItem):
                 "record": self._user,
             },
         )
+        roles = _role_names(self._user)
+        _apply_roles(self._data, roles)
 
         if self._links_tpl:
             self._data["links"] = self.links
@@ -105,6 +138,9 @@ class UserList(RecordList):
                     "record": user,
                 },
             )
+
+            roles = _role_names(user)
+            _apply_roles(projection, roles)
 
             # inject the links
             if self._links_item_tpl:
