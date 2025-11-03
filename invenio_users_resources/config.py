@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2022 CERN.
 # Copyright (C) 2022 TU Wien.
+# Copyright (C) 2025 KTH Royal Institute of Technology.
 #
 # Invenio-Users-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -13,6 +14,7 @@ from invenio_i18n import lazy_gettext as _
 from marshmallow import Schema, fields, validate
 
 from invenio_users_resources.services.domains import facets as domainfacets
+from invenio_users_resources.services.groups import facets as groupfacets
 from invenio_users_resources.services.schemas import UserSchema
 from invenio_users_resources.services.users import facets
 
@@ -227,6 +229,34 @@ USERS_RESOURCES_DOMAINS_SEARCH_FACETS = {
     },
 }
 """Invenio domains facets."""
+
+USERS_RESOURCES_GROUPS_ADMIN_SORT_OPTIONS = {
+    "bestmatch": dict(
+        title=_("Best match"),
+        fields=["_score"],
+    ),
+    "name": dict(
+        title=_("Name"),
+        fields=["name.keyword"],
+    ),
+}
+"""Definitions of available Groups sort options for admin interface. """
+
+USERS_RESOURCES_GROUPS_ADMIN_SEARCH = {
+    "sort": ["bestmatch", "name"],
+    "facets": [],
+}
+"""Invenio groups admin search configuration."""
+
+USERS_RESOURCES_GROUPS_ADMIN_FACETS = {
+    "roles": {
+        "facet": groupfacets.role_name,
+        "ui": {
+            "field": "name",
+        },
+    },
+}
+"""Invenio groups admin search configuration."""
 
 
 class OrgPropsSchema(Schema):
