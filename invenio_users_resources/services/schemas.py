@@ -143,20 +143,17 @@ class UserSchema(BaseRecordSchema, FieldPermissionsMixin):
 class GroupSchema(BaseRecordSchema):
     """Schema for user groups."""
 
-    @staticmethod
-    def _validate_name(value):
-        """Validate group name format."""
-        pattern = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,79}$")
-        if not pattern.match(value):
-            raise ValidationError(
-                _t(
-                    "Role name must start with a letter and contain only letters, numbers, hyphens or underscores (max 80 chars)."
-                )
-            )
-
     name = fields.String(
         required=True,
-        validate=_validate_name,
+        validate=[
+            validate.Length(min=1, max=80),
+            validate.Regexp(
+                r"^[A-Za-z][A-Za-z0-9_-]{0,79}$",
+                error=_t(
+                    "Role name must start with a letter and contain only letters, numbers, hyphens or underscores (max 80 chars)."
+                ),
+            ),
+        ],
         metadata={"create_only": True},
     )
     title = fields.String()
