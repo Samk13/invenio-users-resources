@@ -4,6 +4,7 @@
 # Copyright (C) 2022 CERN.
 # Copyright (C) 2024 Graz University of Technology.
 # Copyright (C) 2024 Ubiquity Press.
+# Copyright (C) 2025 KTH Royal Institute of Technology.
 #
 # Invenio-Users-Resources is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License; see LICENSE file for more
@@ -342,6 +343,15 @@ class GroupAggregate(BaseAggregate):
             "ascii", "ignore"
         )
         return colors[int(normalized_group_initial, base=36) % len(colors)]
+
+    @property
+    def revision_id(self):
+        """Return the raw SQLAlchemy version_id without offset.
+
+        Prevents version conflicts when a role is deleted and recreated with the same name.
+        """
+        version = getattr(self.model, "version_id", None)
+        return version
 
     @classmethod
     def get_record(cls, id_):
