@@ -14,7 +14,6 @@ from invenio_i18n import lazy_gettext as _
 from marshmallow import Schema, fields, validate
 
 from invenio_users_resources.services.domains import facets as domainfacets
-from invenio_users_resources.services.groups import facets as groupfacets
 from invenio_users_resources.services.schemas import UserSchema
 from invenio_users_resources.services.users import facets
 
@@ -248,14 +247,7 @@ USERS_RESOURCES_GROUPS_ADMIN_SEARCH = {
 }
 """Invenio groups admin search configuration."""
 
-USERS_RESOURCES_GROUPS_ADMIN_FACETS = {
-    "roles": {
-        "facet": groupfacets.role_name,
-        "ui": {
-            "field": "name",
-        },
-    },
-}
+USERS_RESOURCES_GROUPS_ADMIN_FACETS = {}
 """Invenio groups admin search configuration."""
 
 
