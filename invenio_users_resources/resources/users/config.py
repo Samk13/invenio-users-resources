@@ -42,6 +42,8 @@ class UsersResourceConfig(RecordResourceConfig):
         "search_all": "/all",
         "item": "/<id>",
         "item-avatar": "/<id>/avatar.svg",
+        "groups": "/<id>/groups",
+        "manage-group": "/<id>/groups/<group_id>",
         "approve": "/<id>/approve",
         "block": "/<id>/block",
         "restore": "/<id>/restore",
@@ -52,6 +54,7 @@ class UsersResourceConfig(RecordResourceConfig):
 
     request_view_args = {
         "id": ma.fields.Str(),
+        "group_id": ma.fields.Str(),
     }
 
     request_search_args = UsersSearchRequestArgsSchema

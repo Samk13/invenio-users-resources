@@ -57,6 +57,9 @@ class UsersResource(RecordResource):
             route("POST", routes["list"], self.create),
             route("GET", routes["item"], self.read),
             route("GET", routes["item-avatar"], self.avatar),
+            route("GET", routes["groups"], self.groups),
+            route("PUT", routes["manage-group"], self.add_group),
+            route("DELETE", routes["manage-group"], self.remove_group),
             route("POST", routes["approve"], self.approve),
             route("POST", routes["block"], self.block),
             route("POST", routes["restore"], self.restore),
@@ -169,6 +172,36 @@ class UsersResource(RecordResource):
             identity=g.identity,
         )
         return "", 200
+
+    @request_view_args
+    def add_group(self):
+        """Assign a group to the user."""
+        self.service.add_group(
+            id_=resource_requestctx.view_args["id"],
+            group_name=resource_requestctx.view_args["group_id"],
+            identity=g.identity,
+        )
+        return "", 200
+
+    @request_view_args
+    def remove_group(self):
+        """Unassign a group from the user."""
+        self.service.remove_group(
+            id_=resource_requestctx.view_args["id"],
+            group_name=resource_requestctx.view_args["group_id"],
+            identity=g.identity,
+        )
+        return "", 200
+
+    @request_view_args
+    @response_handler()
+    def groups(self):
+        """List groups assigned to the user."""
+        data = self.service.list_groups(
+            id_=resource_requestctx.view_args["id"],
+            identity=g.identity,
+        )
+        return data, 200
 
     @request_view_args
     def impersonate(self):

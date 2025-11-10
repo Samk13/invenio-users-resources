@@ -285,6 +285,32 @@ class UserAggregate(BaseAggregate):
             return False
         return current_datastore.deactivate_user(user)
 
+    def add_group(self, group_name):
+        """Add group to current user."""
+        user = self.model.model_obj
+        if user is None:
+            return False
+        user, role = current_datastore._prepare_role_modify_args(user, group_name)
+        result = current_datastore.add_role_to_user(user, role)
+        return result
+
+    def remove_group(self, group_name):
+        """Remove group from current user."""
+        user = self.model.model_obj
+        if user is None:
+            return False
+        user, role = current_datastore._prepare_role_modify_args(user, group_name)
+        result = current_datastore.remove_role_from_user(user, role)
+        return result
+
+    def get_groups(self):
+        """Get groups of the current user."""
+        user = self.model.model_obj
+        if user is None:
+            return False
+        account_user = current_datastore.get_user(user.id)
+        return account_user.roles
+
     @classmethod
     def get_record(cls, id_):
         """Get the user via the specified ID."""

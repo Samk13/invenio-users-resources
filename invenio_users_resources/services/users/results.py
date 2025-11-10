@@ -35,14 +35,30 @@ def _role_names(user):
     if isinstance(roles, str):
         return roles
 
-    return ", ".join(role.name for role in roles if getattr(role, "name", None))
+    if isinstance(roles, (list, tuple)):
+        if roles and isinstance(roles[0], str):
+            return ", ".join(r for r in roles if r)
+        return ", ".join(role.name for role in roles if getattr(role, "name", None))
+
+    return ""
 
 
 def _apply_roles(payload, roles, identity, service):
     """Populate flat/profile role projections."""
-    policy = service.config.permission_policy_cls
-    permission = policy(action="read_system_details", identity=identity)
-    has_permission = permission.allows(identity)
+    # Check if identity has permission to read system details
+    from invenio_access import Permission
+
+    try:
+        policy_cls = service.config.permission_policy_cls
+        policy = policy_cls(action="read_system_details", identity=identity)
+        # Get the needs required for this permission
+        needs = policy.needs
+        # Check if the identity has permission
+        permission = Permission(*needs)
+        has_permission = permission.allows(identity)
+    except Exception:
+        # If permission check fails, default to not showing roles
+        has_permission = False
 
     if has_permission:
         payload["roles"] = roles
@@ -88,7 +104,11 @@ class UserItem(RecordItem):
     @property
     def links(self):
         """Get links for this result item."""
-        return self._links_tpl.expand(self._identity, self._user)
+        if not self._links_tpl:
+            return {}
+        if not self._data:
+            _ = self.data
+        return self._links_tpl.expand(self._identity, self._data)
 
     @property
     def _obj(self):
@@ -156,7 +176,9 @@ class UserList(RecordList):
 
             # inject the links
             if self._links_item_tpl:
-                projection["links"] = self._links_item_tpl.expand(self._identity, user)
+                projection["links"] = self._links_item_tpl.expand(
+                    self._identity, projection
+                )
 
             yield projection
 
@@ -173,6 +195,12 @@ class UserList(RecordList):
 
         if self.aggregations:
             res["aggregations"] = self.aggregations
+
+        roles_aggregation = getattr(self, "roles_aggregation", None)
+        if roles_aggregation:
+            if "aggregations" not in res or res["aggregations"] is None:
+                res["aggregations"] = {}
+            res["aggregations"]["roles"] = roles_aggregation
 
         if self._params:
             res["sortBy"] = self._params["sort"]

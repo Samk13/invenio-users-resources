@@ -16,6 +16,13 @@ from marshmallow import ValidationError
 from invenio_users_resources.proxies import current_actions_registry
 
 
+def _refresh_user_index(service, user_id):
+    """Reindex a single user and refresh search results."""
+    user = service.user_cls.get_record(user_id)
+    service.indexer.index(user)
+    service.record_cls.index.refresh()
+
+
 @pytest.fixture(scope="function", autouse=True)
 def mock_action_registry(monkeypatch, user_service):
     """Mocks action to registry entirely.
@@ -417,3 +424,67 @@ def test_restore(app, db, user_service, user_res, user_moderator, clear_cache):
 
 
 # TODO Clear the cache to test actions without locking side-effects
+
+
+def test_add_and_remove_group(
+    app, db, user_service, user_moderator, user_pub, group, clear_cache
+):
+    """Assign and remove groups using the service."""
+    assert user_service.list_groups(user_moderator.identity, user_pub.id) == {
+        "hits": {"hits": []}
+    }
+
+    added = user_service.add_group(
+        user_moderator.identity,
+        user_pub.id,
+        group.name,
+    )
+    assert added
+
+    groups = user_service.list_groups(user_moderator.identity, user_pub.id)
+    assert groups["hits"]["hits"][0]["name"] == group.name
+
+    removed = user_service.remove_group(
+        user_moderator.identity,
+        user_pub.id,
+        group.name,
+    )
+    assert removed
+
+    assert user_service.list_groups(user_moderator.identity, user_pub.id) == {
+        "hits": {"hits": []}
+    }
+
+
+def test_group_management_requires_admin_moderation_role(
+    app, db, user_service, user_pub, group, clear_cache
+):
+    """Regular users cannot mutate group memberships."""
+    with pytest.raises(PermissionDeniedError):
+        user_service.add_group(user_pub.identity, user_pub.id, group.name)
+
+    with pytest.raises(PermissionDeniedError):
+        user_service.remove_group(user_pub.identity, user_pub.id, group.name)
+
+
+def test_roles_facet_filter(
+    app, db, user_service, user_moderator, user_pub, group, clear_cache, search_clear
+):
+    """Ensure the synthetic roles facet filters users."""
+    user_service.add_group(user_moderator.identity, user_pub.id, group.name)
+    _refresh_user_index(user_service, user_pub.id)
+
+    res = user_service.search_all(
+        user_moderator.identity,
+        params={"facets": {"roles": [group.name]}},
+    ).to_dict()
+
+    assert res["hits"]["total"] >= 1
+    assert all(group.name in hit["roles"] for hit in res["hits"]["hits"])
+
+    roles_agg = res["aggregations"]["roles"]
+    selected = [b for b in roles_agg["buckets"] if b["key"] == group.name][0]
+    assert selected["is_selected"] is True
+
+    user_service.remove_group(user_moderator.identity, user_pub.id, group.name)
+    _refresh_user_index(user_service, user_pub.id)

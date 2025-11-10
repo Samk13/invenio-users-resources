@@ -11,6 +11,9 @@
 
 """User resource tests."""
 
+from contextlib import suppress
+from uuid import uuid4
+
 import pytest
 
 
@@ -260,6 +263,49 @@ def test_impersonate_user(client, headers, user_pub, user_moderator, db):
     assert res.status_code == 403
 
 
+def test_role_management_endpoints(
+    client, headers, user_pub, user_moderator, group_service, db
+):
+    """Assign and remove user roles via the resource."""
+    client = user_moderator.login(client)
+
+    tmp_group_name = f"tmp-role-{uuid4().hex}"
+    group_service.create(
+        user_moderator.identity,
+        {
+            "name": tmp_group_name,
+            "description": "Temporal test role",
+            "is_managed": True,
+        },
+    )
+
+    group_url = f"/users/{user_pub.id}/groups/{tmp_group_name}"
+    try:
+        res = client.get(f"/users/{user_pub.id}/groups", headers=headers)
+        assert res.status_code == 200
+        assert res.json == {"hits": {"hits": []}}
+
+        res = client.put(group_url, headers=headers)
+        assert res.status_code == 200
+
+        res = client.get(f"/users/{user_pub.id}/groups", headers=headers)
+        assert res.status_code == 200
+        hits = res.json["hits"]["hits"]
+        assert any(hit["name"] == tmp_group_name for hit in hits)
+
+        res = client.delete(group_url, headers=headers)
+        assert res.status_code == 200
+
+        client = user_pub.login(client, logout_first=True)
+        res = client.put(
+            f"/users/{user_pub.id}/groups/{tmp_group_name}",
+            headers=headers,
+        )
+        assert res.status_code == 403
+    finally:
+        group_service.delete(user_moderator.identity, tmp_group_name)
+
+
 @pytest.mark.parametrize(
     "link_name,expected_url",
     [
@@ -272,6 +318,8 @@ def test_impersonate_user(client, headers, user_pub, user_moderator, db):
             "/administration/drafts?q=parent.access.owned_by.user:{id}&f=allversions",
         ),
         ("admin_moderation_html", "/administration/moderation?q=topic.user:{id}"),
+        ("admin_html", "/administration/users/{id}"),
+        ("admin_edit_html", "/administration/users/{id}/{username}/edit"),
     ],
 )
 def test_admin_links(
@@ -283,9 +331,9 @@ def test_admin_links(
     assert res.status_code == 200
     data = res.json
     assert link_name in data["links"]
-    assert (
-        data["links"][link_name]
-        == f"https://127.0.0.1:5000{expected_url.format(id=user_pub.id)}"
+    assert data["links"][link_name] == (
+        f"https://127.0.0.1:5000"
+        f"{expected_url.format(id=user_pub.id, username=user_pub.username)}"
     )
 
 
@@ -306,13 +354,23 @@ def test_admin_links_visibility(client, headers, users, username, expected_admin
     data = res.json
 
     if expected_admin_links:
-        assert "admin_records_html" in data["links"]
-        assert "admin_drafts_html" in data["links"]
-        assert "admin_moderation_html" in data["links"]
+        for key in [
+            "admin_records_html",
+            "admin_drafts_html",
+            "admin_moderation_html",
+            "admin_html",
+            "admin_edit_html",
+        ]:
+            assert key in data["links"]
     else:
-        assert "admin_records_html" not in data["links"]
-        assert "admin_drafts_html" not in data["links"]
-        assert "admin_moderation_html" not in data["links"]
+        for key in [
+            "admin_records_html",
+            "admin_drafts_html",
+            "admin_moderation_html",
+            "admin_html",
+            "admin_edit_html",
+        ]:
+            assert key not in data["links"]
 
 
 # TODO: test conditional requests

@@ -81,3 +81,10 @@ def test_user_list_populates_roles(user_service, user_moderator, user_pub):
     assert hits[1]["roles"] == ""
     assert hits[1]["roles_label"] == ""
     assert hits[1]["profile"]["roles"] == ""
+
+
+def test_role_names_from_list():
+    """Ensure list payloads are rendered correctly."""
+    from invenio_users_resources.services.users import results
+
+    assert results._role_names({"roles": ["alpha", "beta"]}) == "alpha, beta"

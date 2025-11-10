@@ -53,3 +53,8 @@ visibility = TermsFacet(
         "full": _("Full"),
     },
 )
+
+roles = TermsFacet(
+    field="roles",
+    label=_("Roles"),
+)

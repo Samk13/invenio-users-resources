@@ -52,7 +52,14 @@ USERS_RESOURCES_SERVICE_SCHEMA = UserSchema
 
 USERS_RESOURCES_SEARCH = {
     "sort": ["bestmatch", "username", "email", "domain", "newest", "oldest", "updated"],
-    "facets": ["status", "visibility", "domain_status", "domain", "affiliations"],
+    "facets": [
+        "status",
+        "visibility",
+        "domain_status",
+        "domain",
+        "affiliations",
+        "roles",
+    ],
 }
 """User search configuration."""
 
@@ -117,6 +124,12 @@ USERS_RESOURCES_SEARCH_FACETS = {
         "facet": facets.visibility,
         "ui": {
             "field": "visibility",
+        },
+    },
+    "roles": {
+        "facet": facets.roles,
+        "ui": {
+            "field": "roles",
         },
     },
 }

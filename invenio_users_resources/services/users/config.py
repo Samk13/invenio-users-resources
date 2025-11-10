@@ -214,6 +214,11 @@ class UsersServiceConfig(RecordServiceConfig, ConfiguratorMixin):
         "admin_moderation_html": Link(
             "{+ui}/administration/moderation?q=topic.user:{id}", when=can_manage
         ),
+        "admin_html": Link("{+ui}/administration/users/{id}", when=can_manage),
+        "admin_edit_html": Link(
+            "{+ui}/administration/users/{id}/{username}/edit",
+            when=can_manage,
+        ),
         # TODO missing moderation actions based on permissions
     }
     links_search = pagination_links("{+api}/users{?args*}")
