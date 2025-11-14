@@ -243,6 +243,17 @@ def test_groups_manage_permission_required(
     assert group_service.delete(user_moderator.identity, created["id"])
 
 
+def test_groups_update_requires_managed(app, group_service, not_managed_group):
+    """Unmanaged groups cannot be updated even by system."""
+
+    with pytest.raises(PermissionDeniedError):
+        group_service.update(
+            system_identity,
+            not_managed_group.id,
+            {"description": "attempted update"},
+        )
+
+
 def test_groups_recreate_same_name(app, group_service):
     """Recreating a role with the same name should succeed."""
 

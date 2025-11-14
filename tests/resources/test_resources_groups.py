@@ -52,6 +52,23 @@ def test_group_update_validation_error_api(app, client, user_moderator, group):
     ]
 
 
+def test_group_update_requires_managed_api(
+    app, client, user_moderator, not_managed_group
+):
+    """Unmanaged groups should return a friendly error."""
+    user_moderator.login(client)
+
+    res = client.put(
+        f"/groups/{not_managed_group.id}",
+        json={"description": "updated"},
+    )
+
+    assert 403 == res.status_code
+    data = res.get_json()
+    assert "Permission denied." == data["message"]
+    assert "errors" not in data
+
+
 def test_groups_search(app, client, group, user_moderator):
     user_moderator.login(client)
 
