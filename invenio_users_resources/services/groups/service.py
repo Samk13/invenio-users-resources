@@ -26,6 +26,7 @@ from invenio_records_resources.services.uow import (
 from marshmallow import ValidationError
 
 from ...records.api import GroupAggregate
+from ...resources.groups.errors import GroupValidationError
 from ..results import AvatarResult
 
 
@@ -36,11 +37,14 @@ class GroupsService(RecordService):
     def create(self, identity, data, raise_errors=True, uow=None):
         """Create a new group/role."""
         self.require_permission(identity, "create")
-        data, errors = self.schema.load(
-            data or {},
-            context={"identity": identity},
-            raise_errors=raise_errors,
-        )
+        try:
+            data, errors = self.schema.load(
+                data or {},
+                context={"identity": identity},
+                raise_errors=raise_errors,
+            )
+        except ValidationError as err:
+            raise GroupValidationError(err.messages)
 
         # Create group using API
         group = self.record_cls.create(data)
@@ -80,16 +84,18 @@ class GroupsService(RecordService):
             raise PermissionDeniedError()
         self.require_permission(identity, "update", record=group)
 
-        data, errors = self.schema.load(
-            data or {},
-            schema_args={"partial": True},
-            context={"identity": identity, "record": group},
-            raise_errors=raise_errors,
-        )
+        try:
+            data, errors = self.schema.load(
+                data or {},
+                schema_args={"partial": True},
+                context={"identity": identity, "record": group},
+                raise_errors=raise_errors,
+            )
+        except ValidationError as err:
+            raise GroupValidationError(err.messages) from err
 
         # Update group using API
         group = group.update(data, id_)
-
         current_app.logger.debug(f"Group updated: '{group.name}' by user {identity.id}")
 
         self.run_components(
