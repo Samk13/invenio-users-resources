@@ -154,10 +154,21 @@ class GroupSchema(BaseRecordSchema):
                 ),
             ),
         ],
-        metadata={"create_only": True},
     )
-    title = fields.String()
-    description = fields.String(validate=[validate.Length(max=255)])
+
+    title = fields.String(validate=validate.Length(max=80))
+
+    description = fields.String(
+        validate=[
+            validate.Length(max=255),
+            validate.Regexp(
+                r"^$|^[^\W\d_].*$",
+                error=_t(
+                    "Description must be empty or start with a letter (max 255 chars)."
+                ),
+            ),
+        ]
+    )
     provider = fields.String(dump_only=True)
     is_managed = fields.Boolean(dump_only=True)
 
