@@ -80,7 +80,7 @@ class GroupsService(RecordService):
     def update(self, identity, id_, data, raise_errors=True, uow=None):
         """Update an existing group."""
         group = GroupAggregate.get_record(id_)
-        if group is None:
+        if group is None or not group.is_managed:
             raise PermissionDeniedError()
         self.require_permission(identity, "update", record=group)
 
