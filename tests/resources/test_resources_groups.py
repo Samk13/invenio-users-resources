@@ -30,6 +30,28 @@ def test_group_create_api(app, client, user_moderator):
     assert 204 == res.status_code
 
 
+def test_group_update_validation_error_api(app, client, user_moderator, group):
+    """Invalid payloads should produce a clean JSON error."""
+    user_moderator.login(client)
+
+    res = client.put(
+        f"/groups/{group.id}",
+        json={"description": "123-invalid"},
+    )
+
+    assert 400 == res.status_code
+    data = res.get_json()
+    assert "A validation error occurred." == data["message"]
+    assert data["errors"] == [
+        {
+            "field": "description",
+            "messages": [
+                "Description must be empty or start with a letter (max 255 chars)."
+            ],
+        }
+    ]
+
+
 def test_groups_search(app, client, group, user_moderator):
     user_moderator.login(client)
 

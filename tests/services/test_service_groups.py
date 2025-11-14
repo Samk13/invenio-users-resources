@@ -15,7 +15,8 @@ from uuid import UUID
 import pytest
 from invenio_access.permissions import system_identity
 from invenio_records_resources.resources.errors import PermissionDeniedError
-from marshmallow import ValidationError
+
+from invenio_users_resources.resources.groups.errors import GroupValidationError
 
 
 def is_uuid(value):
@@ -30,11 +31,11 @@ def test_groups_sort(app, groups, group_service):
     """Test default sort."""
     sorted_groups = sorted(groups, key=attrgetter("name"))
     res = group_service.search(system_identity).to_dict()
-    assert res["sortBy"] == "name"
+    assert "name" == res["sortBy"]
     assert res["hits"]["total"] > 0
     hits = res["hits"]["hits"]
-    assert hits[0]["id"] == sorted_groups[0].id
-    assert hits[1]["id"] == sorted_groups[1].id
+    assert sorted_groups[0].id == hits[0]["id"]
+    assert sorted_groups[1].id == hits[1]["id"]
 
 
 def test_groups_no_facets(app, group, group_service):
@@ -46,8 +47,8 @@ def test_groups_no_facets(app, group, group_service):
 
 def test_groups_fixed_pagination(app, groups, group_service):
     res = group_service.search(system_identity, params={"size": 1, "page": 2})
-    assert res.pagination.page == 1
-    assert res.pagination.size == 10
+    assert 1 == res.pagination.page
+    assert 10 == res.pagination.size
 
 
 @pytest.mark.parametrize(
@@ -74,15 +75,15 @@ def test_groups_search(
 
     # System can retrieve all groups.
     res = group_service.search(system_identity).to_dict()
-    assert res["hits"]["total"] == len(groups)
+    assert len(groups) == res["hits"]["total"]
 
     # Authenticated user can retrieve unmanaged groups
     res = group_service.search(user_pub.identity).to_dict()
-    assert res["hits"]["total"] == len([g for g in groups if not g.is_managed])
+    assert len([g for g in groups if not g.is_managed]) == res["hits"]["total"]
 
     # Super Admin can see everything
     res = group_service.search(user_admin.identity).to_dict()
-    assert res["hits"]["total"] == len(groups)
+    assert len(groups) == res["hits"]["total"]
 
     # FIXME: uncomment when permissions are fixed
     # # User Admin can see everything but admin groups
@@ -178,6 +179,30 @@ def test_groups_crud(app, group_service, user_pub):
 
     with pytest.raises(PermissionDeniedError):
         group_service.read(system_identity, item["id"])
+
+
+def test_group_update_validation_error(app, group_service):
+    """Ensure validation errors bubble up cleanly."""
+    item = group_service.create(
+        system_identity,
+        {
+            "name": "valid-role-name",
+            "description": "Valid description",
+        },
+    ).to_dict()
+
+    with pytest.raises(GroupValidationError) as err:
+        group_service.update(
+            system_identity,
+            item["id"],
+            {"description": "123-invalid"},
+        )
+
+    assert {
+        "description": [
+            "Description must be empty or start with a letter (max 255 chars)."
+        ]
+    } == err.value.errors
 
 
 def test_groups_manage_permission_required(
