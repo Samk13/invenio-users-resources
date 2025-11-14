@@ -120,7 +120,7 @@ class GroupsService(RecordService):
     def delete(self, identity, id_, uow=None):
         """Delete a group."""
         group = GroupAggregate.get_record(id_)
-        if group is None:
+        if group is None or not group.is_managed:
             raise PermissionDeniedError()
         self.require_permission(identity, "delete", record=group)
 

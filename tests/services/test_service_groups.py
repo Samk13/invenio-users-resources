@@ -254,6 +254,13 @@ def test_groups_update_requires_managed(app, group_service, not_managed_group):
         )
 
 
+def test_groups_delete_requires_managed(app, group_service, not_managed_group):
+    """Unmanaged groups cannot be deleted even by system."""
+
+    with pytest.raises(PermissionDeniedError):
+        group_service.delete(system_identity, not_managed_group.id)
+
+
 def test_groups_recreate_same_name(app, group_service):
     """Recreating a role with the same name should succeed."""
 
