@@ -150,7 +150,7 @@ class GroupSchema(BaseRecordSchema):
             validate.Regexp(
                 r"^[A-Za-z][A-Za-z0-9_-]{0,79}$",
                 error=_t(
-                    "Role name must start with a letter and contain only letters, numbers, hyphens or underscores (max 80 chars)."
+                    "Name must start with a letter and contain only letters, numbers, hyphens or underscores (max 80 chars)."
                 ),
             ),
         ],
@@ -162,7 +162,7 @@ class GroupSchema(BaseRecordSchema):
         validate=[
             validate.Length(max=255),
             validate.Regexp(
-                r"^$|^[^\W\d_].*$",
+                r"^$|^[^\W\d_].*$",  # matches empty OR starts with a Unicode letter äöåA-Za-z
                 error=_t(
                     "Description must be empty or start with a letter (max 255 chars)."
                 ),
