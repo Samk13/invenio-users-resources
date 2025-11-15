@@ -12,41 +12,14 @@
 """User groups resource."""
 
 from flask import g, send_file
-from flask_resources import (
-    HTTPJSONException,
-    resource_requestctx,
-    response_handler,
-    route,
-)
-from invenio_records_resources.errors import validation_error_to_list_errors
+from flask_resources import resource_requestctx, response_handler, route
 from invenio_records_resources.resources import RecordResource
-from invenio_records_resources.resources.errors import PermissionDeniedError
 from invenio_records_resources.resources.records.resource import (
     request_data,
     request_search_args,
     request_view_args,
 )
 from invenio_records_resources.resources.records.utils import search_preference
-from marshmallow import ValidationError
-
-from .errors import GroupValidationError
-
-
-def handle_group_validation_error(err):
-    """Handle groups errors."""
-    marshmallow_error = ValidationError(err.errors or {})
-    response = HTTPJSONException(
-        code=400,
-        description=err.description,
-        errors=validation_error_to_list_errors(marshmallow_error),
-    )
-    return response.get_response()
-
-
-def handle_group_permission_error(err):
-    """Handle permission errors."""
-    response = HTTPJSONException(code=403, description=err.description)
-    return response.get_response()
 
 
 #
@@ -54,12 +27,6 @@ def handle_group_permission_error(err):
 #
 class GroupsResource(RecordResource):
     """Resource for user groups."""
-
-    error_handlers = {
-        **RecordResource.error_handlers,
-        GroupValidationError: handle_group_validation_error,
-        PermissionDeniedError: handle_group_permission_error,
-    }
 
     def create_url_rules(self):
         """Create the URL rules for the user groups resource."""
