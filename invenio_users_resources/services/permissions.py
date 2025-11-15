@@ -11,6 +11,7 @@
 
 """Users and user groups permissions."""
 
+from invenio_access import authenticated_user, superuser_access
 from invenio_records_permissions import BasePermissionPolicy
 from invenio_records_permissions.generators import (
     AdminAction,
@@ -18,18 +19,28 @@ from invenio_records_permissions.generators import (
     SystemProcess,
 )
 
-from invenio_users_resources.permissions import user_management_action
+from invenio_users_resources.permissions import (
+    AdministratorGroupAction,
+    AdministratorUserAction,
+    user_management_action,
+)
 
 from .generators import (
     GroupsEnabled,
+    IfGroupActionRoleMatches,
     IfGroupNotManaged,
     IfPublicEmail,
     IfPublicUser,
+    IfSuperUser,
+    IfUserActionRoleMatches,
     PreventSelf,
     Self,
 )
 
 UserManager = AdminAction(user_management_action)
+UserManagerForGroups = AdministratorGroupAction(user_management_action)
+UserManagerForUsers = AdministratorUserAction(user_management_action)
+SuperAdminManager = AdminAction(superuser_access)
 
 
 class UsersPermissionPolicy(BasePermissionPolicy):
@@ -51,14 +62,29 @@ class UsersPermissionPolicy(BasePermissionPolicy):
         SystemProcess(),
     ]
     can_read_details = [UserManager, Self(), SystemProcess()]
-    can_read_all = [UserManager, SystemProcess()]
+    can_read_all = [
+        SystemProcess(),
+        IfUserActionRoleMatches(
+            [SuperAdminManager, UserManagerForUsers], [SystemProcess()]
+        ),
+    ]
 
     # Moderation permissions
     can_manage = [UserManager, PreventSelf(), SystemProcess()]
     can_search_all = [UserManager, SystemProcess()]
     can_read_system_details = [UserManager, SystemProcess()]
-    can_impersonate = [UserManager, PreventSelf(), SystemProcess()]
-    can_manage_groups = [UserManager, SystemProcess()]
+    can_impersonate = [
+        SystemProcess(),
+        IfUserActionRoleMatches(
+            [SuperAdminManager, PreventSelf(), UserManagerForUsers], [SystemProcess()]
+        ),
+    ]
+    can_manage_groups = [
+        SystemProcess(),
+        IfGroupActionRoleMatches(
+            [SuperAdminManager, UserManagerForGroups], [SystemProcess()]
+        ),
+    ]
 
 
 class GroupsPermissionPolicy(BasePermissionPolicy):
@@ -69,13 +95,36 @@ class GroupsPermissionPolicy(BasePermissionPolicy):
         SystemProcess(),
         UserManager,
     ]
-    can_create = _can_any
+    can_create = _can_any + [
+        IfGroupNotManaged([AuthenticatedUser()], [UserManagerForGroups]),
+    ]
     can_read = _can_any + [
-        IfGroupNotManaged([AuthenticatedUser()], [UserManager]),
+        IfSuperUser(
+            [SuperAdminManager],
+            [
+                IfGroupNotManaged(
+                    [AuthenticatedUser()],
+                    [AdministratorGroupAction(authenticated_user)],
+                )
+            ],
+        ),
     ]
     can_search = _can_any + [AuthenticatedUser()]
-    can_update = _can_any
-    can_delete = _can_any
+    can_update = _can_any + [
+        IfGroupActionRoleMatches(
+            [SuperAdminManager, UserManagerForGroups], [SystemProcess()]
+        ),
+    ]
+    can_manage = _can_any + [
+        IfGroupActionRoleMatches(
+            [SuperAdminManager, UserManagerForGroups], [SystemProcess()]
+        ),
+    ]
+    can_delete = _can_any + [
+        IfGroupActionRoleMatches(
+            [SuperAdminManager, UserManagerForGroups], [SystemProcess()]
+        )
+    ]
 
 
 class DomainPermissionPolicy(BasePermissionPolicy):
