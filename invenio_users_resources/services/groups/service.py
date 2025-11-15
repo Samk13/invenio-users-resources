@@ -24,14 +24,12 @@ from invenio_records_resources.services.uow import (
 )
 from marshmallow import ValidationError
 
-from invenio_users_resources.permissions import SuperUserMixin
-
 from ...records.api import GroupAggregate
 from ...resources.groups.errors import GroupValidationError
 from ..results import AvatarResult
 
 
-class GroupsService(SuperUserMixin, RecordService):
+class GroupsService(RecordService):
     """User groups service."""
 
     @unit_of_work()
