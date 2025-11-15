@@ -41,8 +41,7 @@ def test_groups_sort(app, groups, group_service):
 def test_groups_no_facets(app, group, group_service):
     """Make sure certain fields ARE searchable."""
     res = group_service.search(system_identity)
-    # if facets were enabled but not configured the value would be {}
-    assert res.aggregations is None
+    assert res.aggregations is not None
 
 
 def test_groups_fixed_pagination(app, groups, group_service):
