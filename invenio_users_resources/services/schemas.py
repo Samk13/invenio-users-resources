@@ -158,7 +158,7 @@ class GroupSchema(BaseRecordSchema):
 
     title = fields.String(validate=validate.Length(max=80))
 
-    description = fields.String(
+    description = SanitizedUnicode(
         validate=[
             validate.Length(max=255),
             validate.Regexp(
