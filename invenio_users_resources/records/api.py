@@ -150,9 +150,9 @@ def _validate_group_data(group_data):
     if not (group_id or name):
         return
 
-    Role = current_datastore.role_model
+    role = current_datastore.role_model
 
-    stmt = db.select(Role).where(or_(Role.id == group_id, Role.name == name)).limit(1)
+    stmt = db.select(role).where(or_(role.id == group_id, role.name == name)).limit(1)
 
     row = db.session.execute(stmt).scalars().first()
     if not row:
@@ -164,8 +164,7 @@ def _validate_group_data(group_data):
     if name and row.name == name:
         errors["name"] = [_("Role name already used by another group.")]
 
-    if errors:
-        raise ValidationError(errors)
+    raise ValidationError(errors)
 
 
 class UserAggregate(BaseAggregate):
