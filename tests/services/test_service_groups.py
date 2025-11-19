@@ -190,18 +190,16 @@ def test_group_update_validation_error(app, group_service):
         },
     ).to_dict()
 
+    invalid_description = "x" * 256
+
     with pytest.raises(GroupValidationError) as err:
         group_service.update(
             system_identity,
             item["id"],
-            {"description": "123-invalid"},
+            {"description": invalid_description},
         )
 
-    assert {
-        "description": [
-            "Description must be empty or start with a letter (max 255 chars)."
-        ]
-    } == err.value.errors
+    assert {"description": ["Longer than maximum length 255."]} == err.value.errors
 
 
 def test_groups_manage_permission_required(

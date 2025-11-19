@@ -34,9 +34,11 @@ def test_group_update_validation_error_api(app, client, user_moderator, group):
     """Invalid payloads should produce a clean JSON error."""
     user_moderator.login(client)
 
+    invalid_description = "x" * 256
+
     res = client.put(
         f"/groups/{group.id}",
-        json={"description": "123-invalid"},
+        json={"description": invalid_description},
     )
 
     assert 400 == res.status_code
@@ -45,9 +47,7 @@ def test_group_update_validation_error_api(app, client, user_moderator, group):
     assert data["errors"] == [
         {
             "field": "description",
-            "messages": [
-                "Description must be empty or start with a letter (max 255 chars)."
-            ],
+            "messages": ["Longer than maximum length 255."],
         }
     ]
 
