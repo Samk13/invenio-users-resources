@@ -158,17 +158,7 @@ class GroupSchema(BaseRecordSchema):
 
     title = fields.String(validate=validate.Length(max=80))
 
-    description = SanitizedUnicode(
-        validate=[
-            validate.Length(max=255),
-            validate.Regexp(
-                r"^$|^[^\W\d_].*$",  # matches empty OR starts with a Unicode letter äöåA-Za-z
-                error=_t(
-                    "Description must be empty or start with a letter (max 255 chars)."
-                ),
-            ),
-        ]
-    )
+    description = SanitizedUnicode(validate=validate.Length(max=255))
     provider = fields.String(dump_only=True)
     is_managed = fields.Boolean(dump_only=True)
 
