@@ -67,15 +67,14 @@ class GroupsPermissionPolicy(BasePermissionPolicy):
     _can_any = [
         GroupsEnabled("group"),
         SystemProcess(),
-        UserManager,
     ]
-    can_create = _can_any
     can_read = _can_any + [
         IfGroupNotManaged([AuthenticatedUser()], [UserManager]),
     ]
     can_search = _can_any + [AuthenticatedUser()]
-    can_update = _can_any
-    can_delete = _can_any
+    can_create = [UserManager, SystemProcess()]
+    can_update = [UserManager, SystemProcess()]
+    can_delete = [UserManager, SystemProcess()]
 
 
 class DomainPermissionPolicy(BasePermissionPolicy):
