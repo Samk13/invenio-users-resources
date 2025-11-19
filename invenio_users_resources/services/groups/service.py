@@ -48,7 +48,9 @@ class GroupsService(RecordService):
         # Create group using API
         group = self.record_cls.create(data)
 
-        current_app.logger.debug(f"Group created: '{group.name}' by user {identity.id}")
+        current_app.logger.debug(
+            "Group created: '%s' by user %s", group.name, identity.id
+        )
 
         self.run_components(
             "create",
@@ -95,7 +97,9 @@ class GroupsService(RecordService):
 
         # Update group using API
         group = group.update(data, id_)
-        current_app.logger.debug(f"Group updated: '{group.name}' by user {identity.id}")
+        current_app.logger.debug(
+            "Group updated: '%s' by user %s", group.name, identity.id
+        )
 
         self.run_components(
             "update",
@@ -123,7 +127,9 @@ class GroupsService(RecordService):
             raise PermissionDeniedError()
         self.require_permission(identity, "delete", record=group)
 
-        current_app.logger.debug(f"Group deleted: '{group.name}' by user {identity.id}")
+        current_app.logger.debug(
+            "Group deleted: '%s' by user %s", group.name, identity.id
+        )
 
         # Delete group using API
         group.delete()
