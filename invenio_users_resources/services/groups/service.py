@@ -81,7 +81,7 @@ class GroupsService(RecordService):
     def update(self, identity, id_, data, raise_errors=True, uow=None):
         """Update an existing group."""
         group = GroupAggregate.get_record(id_)
-        if group is None or not group.is_managed:
+        if group is None:
             raise PermissionDeniedError()
         self.require_permission(identity, "update", record=group)
 
@@ -123,7 +123,7 @@ class GroupsService(RecordService):
     def delete(self, identity, id_, uow=None):
         """Delete a group."""
         group = GroupAggregate.get_record(id_)
-        if group is None or not group.is_managed:
+        if group is None:
             raise PermissionDeniedError()
         self.require_permission(identity, "delete", record=group)
 

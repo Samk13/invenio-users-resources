@@ -243,21 +243,47 @@ def test_groups_manage_permission_required(
 
 
 def test_groups_update_requires_managed(app, group_service, not_managed_group):
-    """Unmanaged groups cannot be updated even by system."""
+    """Unmanaged groups can only be updated by system process, not by regular admins."""
 
-    with pytest.raises(PermissionDeniedError):
-        group_service.update(
-            system_identity,
-            not_managed_group.id,
-            {"description": "attempted update"},
-        )
+    # System process CAN update unmanaged groups
+    result = group_service.update(
+        system_identity,
+        not_managed_group.id,
+        {"description": "updated by system"},
+    )
+    assert result["description"] == "updated by system"
 
 
 def test_groups_delete_requires_managed(app, group_service, not_managed_group):
-    """Unmanaged groups cannot be deleted even by system."""
+    """Unmanaged groups can only be deleted by system process, not by regular admins."""
 
+    # System process CAN delete unmanaged groups
+    result = group_service.delete(system_identity, not_managed_group.id)
+    assert result is True
+
+
+def test_admin_moderator_cannot_edit_unmanaged_groups(
+    app, group_service, not_managed_group, user_moderator
+):
+    """Administration-moderation users cannot update unmanaged groups."""
+
+    # Admin moderator CANNOT update unmanaged groups
     with pytest.raises(PermissionDeniedError):
-        group_service.delete(system_identity, not_managed_group.id)
+        group_service.update(
+            user_moderator.identity,
+            not_managed_group.id,
+            {"description": "attempted update by admin"},
+        )
+
+
+def test_admin_moderator_cannot_delete_unmanaged_groups(
+    app, group_service, not_managed_group, user_moderator
+):
+    """Administration-moderation users cannot delete unmanaged groups."""
+
+    # Admin moderator CANNOT delete unmanaged groups
+    with pytest.raises(PermissionDeniedError):
+        group_service.delete(user_moderator.identity, not_managed_group.id)
 
 
 def test_groups_recreate_same_name(app, group_service):

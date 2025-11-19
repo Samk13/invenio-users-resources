@@ -160,3 +160,11 @@ class GroupsEnabled(Generator):
             ):
                 return [any_user]
         return []
+
+
+class DenyAll(Generator):
+    """Generator that denies all access by excluding any_user."""
+
+    def excludes(self, **kwargs):
+        """Exclude all users."""
+        return [any_user]
