@@ -270,6 +270,15 @@ USERS_RESOURCES_GROUPS_ADMIN_FACETS = {
 }
 """Invenio groups admin search configuration."""
 
+USERS_RESOURCES_PROTECTED_GROUP_NAMES = [
+    "superuser",
+    "superuser-access",
+    "admin",
+    "administration",
+    "administration-moderation",
+]
+"""Group identifiers that cannot be mutated via the public API (system process only)."""
+
 
 class OrgPropsSchema(Schema):
     """Schema for validating domain org properties."""

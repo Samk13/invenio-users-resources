@@ -35,7 +35,7 @@ class GroupsService(RecordService):
     @unit_of_work()
     def create(self, identity, data, raise_errors=True, uow=None):
         """Create a new group/role."""
-        self.require_permission(identity, "create")
+        self.require_permission(identity, "create", record=data)
         try:
             data, errors = self.schema.load(
                 data or {},

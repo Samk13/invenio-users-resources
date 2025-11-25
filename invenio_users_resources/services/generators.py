@@ -14,6 +14,7 @@
 
 from flask import current_app
 from invenio_access import Permission, any_user
+from invenio_access.permissions import system_process
 from invenio_records.dictutils import dict_lookup
 from invenio_records_permissions.generators import (
     ConditionalGenerator,
@@ -167,4 +168,35 @@ class DenyAll(Generator):
 
     def excludes(self, **kwargs):
         """Exclude all users."""
+        return [any_user]
+
+
+class ProtectedGroupIdentifiers(Generator):
+    """Exclude access to protected groups unless system process."""
+
+    def _is_protected(self, record):
+        protected = current_app.config.get("USERS_RESOURCES_PROTECTED_GROUP_NAMES", [])
+        if not protected or record is None:
+            return False
+
+        candidates = {
+            str(val)
+            for val in [
+                getattr(record, "id", None),
+                getattr(record, "name", None),
+                getattr(getattr(record, "model", None), "id", None),
+                getattr(getattr(record, "model", None), "name", None),
+                record.get("id") if isinstance(record, dict) else None,
+                record.get("name") if isinstance(record, dict) else None,
+            ]
+            if val is not None
+        }
+        return bool(set(protected).intersection(candidates))
+
+    def excludes(self, record=None, identity=None, **kwargs):
+        """Exclude non-system identities from protected groups."""
+        if not self._is_protected(record):
+            return []
+        if identity and system_process in identity.provides:
+            return []
         return [any_user]

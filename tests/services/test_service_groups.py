@@ -240,6 +240,37 @@ def test_groups_manage_permission_required(
     assert group_service.delete(user_moderator.identity, created["id"])
 
 
+def test_protected_group_not_editable_via_api(
+    app, group_service, user_moderator, superadmin_group
+):
+    """Protected groups cannot be edited or removed via API."""
+
+    app.config["USERS_RESOURCES_PROTECTED_GROUP_NAMES"] = [
+        "admin",
+        "administration",
+        "administration-moderation",
+        "superuser-access",
+    ]
+
+    with pytest.raises(PermissionDeniedError):
+        group_service.update(
+            user_moderator.identity,
+            superadmin_group.id,
+            {"description": "attempted change"},
+        )
+
+    with pytest.raises(PermissionDeniedError):
+        group_service.delete(user_moderator.identity, superadmin_group.id)
+
+    # System process can still manage it (e.g. via CLI)
+    result = group_service.update(
+        system_identity,
+        superadmin_group.id,
+        {"description": superadmin_group.description},
+    )
+    assert result["description"] == superadmin_group.description
+
+
 def test_groups_update_requires_managed(app, group_service, not_managed_group):
     """Unmanaged groups can only be updated by system process, not by regular admins."""
 

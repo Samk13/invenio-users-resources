@@ -27,6 +27,7 @@ from .generators import (
     IfPublicEmail,
     IfPublicUser,
     PreventSelf,
+    ProtectedGroupIdentifiers,
     Self,
 )
 
@@ -73,12 +74,14 @@ class GroupsPermissionPolicy(BasePermissionPolicy):
         IfGroupNotManaged([AuthenticatedUser()], [UserManager]),
     ]
     can_search = _can_any + [AuthenticatedUser()]
-    can_create = [UserManager, SystemProcess()]
+    can_create = [ProtectedGroupIdentifiers(), UserManager, SystemProcess()]
     can_update = [
+        ProtectedGroupIdentifiers(),
         IfGroupNotManaged(then_=[SystemProcess(), DenyAll()], else_=[UserManager]),
         SystemProcess(),
     ]
     can_delete = [
+        ProtectedGroupIdentifiers(),
         IfGroupNotManaged(then_=[SystemProcess(), DenyAll()], else_=[UserManager]),
         SystemProcess(),
     ]
