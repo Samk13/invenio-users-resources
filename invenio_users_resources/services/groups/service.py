@@ -24,7 +24,6 @@ from invenio_records_resources.services.uow import (
     unit_of_work,
 )
 from marshmallow import ValidationError
-from sqlalchemy.exc import IntegrityError
 
 from ...records.api import GroupAggregate
 from ...resources.groups.errors import GroupValidationError
@@ -47,13 +46,8 @@ class GroupsService(RecordService):
         except ValidationError as err:
             raise GroupValidationError(err.messages)
 
-        try:
-            group = self.record_cls.create(data)
-        except IntegrityError as err:
-            db.session.rollback()
-            raise GroupValidationError(
-                {"name": [_("Role name already used by another group.")]}
-            ) from err
+        # Create group using API
+        group = self.record_cls.create(data)
 
         current_app.logger.debug(
             "Group created: '%s' by user %s", group.name, identity.id
@@ -102,13 +96,8 @@ class GroupsService(RecordService):
         except ValidationError as err:
             raise GroupValidationError(err.messages) from err
 
-        try:
-            group = group.update(data, id_)
-        except IntegrityError as err:
-            db.session.rollback()
-            raise GroupValidationError(
-                {"name": [_("Role name already used by another group.")]}
-            ) from err
+        # Update group using API
+        group = group.update(data, id_)
         current_app.logger.debug(
             "Group updated: '%s' by user %s", group.name, identity.id
         )
