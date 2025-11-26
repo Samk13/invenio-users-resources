@@ -375,12 +375,20 @@ class GroupAggregate(BaseAggregate):
 
     @property
     def revision_id(self):
-        """Return the raw SQLAlchemy version_id without offset.
+        """Return a revision id suitable for search engine versioning.
 
-        Prevents version conflicts when a role is deleted and recreated with the same name.
+        We offset the SQLAlchemy ``version_id`` by 1 so that recreated roles
+        (same id/name) always index with a version >= any previous document in
+        the search index, avoiding version conflicts during reindexing. We also
+        fall back to the ``updated`` timestamp to produce a larger, monotonic
+        value when the DB ``version_id`` is low (e.g., after a recreate).
         """
-        version = getattr(self.model, "version_id", None)
-        return version
+        if not self.model:
+            return 1
+
+        version = self.model.version_id or 0
+        updated_ts = int(self.model.updated.timestamp()) if self.model.updated else 0
+        return max(version + 1, updated_ts)
 
     @classmethod
     def get_record(cls, id_):
