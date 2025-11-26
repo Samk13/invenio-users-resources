@@ -271,7 +271,6 @@ USERS_RESOURCES_GROUPS_ADMIN_FACETS = {
 """Invenio groups admin search configuration."""
 
 USERS_RESOURCES_PROTECTED_GROUP_NAMES = [
-    "superuser",
     "superuser-access",
     "admin",
     "administration",
