@@ -239,7 +239,7 @@ def test_groups_manage_permission_required(
 
 
 def test_protected_group_not_editable_via_api(
-    app, group_service, user_moderator, superadmin_group
+    app, group_service, user_moderator, user_admin, superadmin_group
 ):
     """Protected groups cannot be edited or removed via API."""
 
@@ -256,9 +256,17 @@ def test_protected_group_not_editable_via_api(
             superadmin_group.id,
             {"description": "attempted change"},
         )
+    with pytest.raises(PermissionDeniedError):
+        group_service.update(
+            user_admin.identity,
+            superadmin_group.id,
+            {"description": "attempted change"},
+        )
 
     with pytest.raises(PermissionDeniedError):
         group_service.delete(user_moderator.identity, superadmin_group.id)
+    with pytest.raises(PermissionDeniedError):
+        group_service.delete(user_admin.identity, superadmin_group.id)
 
     # System process can still manage it (e.g. via CLI)
     result = group_service.update(
@@ -267,6 +275,65 @@ def test_protected_group_not_editable_via_api(
         {"description": superadmin_group.description},
     )
     assert result["description"] == superadmin_group.description
+
+
+def test_protected_group_not_creatable_via_api(
+    app, group_service, user_moderator, user_admin
+):
+    """Protected groups cannot be created via API by admins."""
+
+    previous = app.config["USERS_RESOURCES_PROTECTED_GROUP_NAMES"]
+    app.config["USERS_RESOURCES_PROTECTED_GROUP_NAMES"] = ["protected-role"]
+
+    payload = {"name": "protected-role", "description": "attempted creation"}
+
+    try:
+        with pytest.raises(PermissionDeniedError):
+            group_service.create(user_moderator.identity, payload)
+        with pytest.raises(PermissionDeniedError):
+            group_service.create(user_admin.identity, payload)
+
+        created = group_service.create(system_identity, payload).to_dict()
+        assert created["name"] == "protected-role"
+        assert group_service.delete(system_identity, created["id"])
+    finally:
+        app.config["USERS_RESOURCES_PROTECTED_GROUP_NAMES"] = previous
+
+
+def test_protected_group_cannot_become_protected(
+    app, group_service, user_moderator, user_admin
+):
+    """Renaming a group into a protected identifier is blocked for admins."""
+
+    previous = app.config["USERS_RESOURCES_PROTECTED_GROUP_NAMES"]
+    app.config["USERS_RESOURCES_PROTECTED_GROUP_NAMES"] = ["protected-admin-alt"]
+
+    created = group_service.create(
+        user_moderator.identity,
+        {"name": "temp-protected-rename", "description": "temp"},
+    ).to_dict()
+
+    try:
+        with pytest.raises(PermissionDeniedError):
+            group_service.update(
+                user_moderator.identity,
+                created["id"],
+                {"name": "protected-admin-alt"},
+            )
+        with pytest.raises(PermissionDeniedError):
+            group_service.update(
+                user_admin.identity,
+                created["id"],
+                {"name": "protected-admin-alt"},
+            )
+
+        result = group_service.update(
+            system_identity, created["id"], {"name": "protected-admin-alt"}
+        ).to_dict()
+        assert result["name"] == "protected-admin-alt"
+    finally:
+        app.config["USERS_RESOURCES_PROTECTED_GROUP_NAMES"] = previous
+        group_service.delete(system_identity, created["id"])
 
 
 def test_groups_update_requires_managed(app, group_service, not_managed_group):
