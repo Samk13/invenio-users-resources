@@ -15,7 +15,6 @@
 from flask import current_app
 from invenio_accounts.models import Role
 from invenio_db import db
-from invenio_i18n import gettext as _
 from invenio_records_resources.resources.errors import PermissionDeniedError
 from invenio_records_resources.services import RecordService
 from invenio_records_resources.services.uow import (
@@ -46,8 +45,11 @@ class GroupsService(RecordService):
         except ValidationError as err:
             raise GroupValidationError(err.messages)
 
-        # Create group using API
-        group = self.record_cls.create(data)
+        try:
+            # Create group using API
+            group = self.record_cls.create(data)
+        except ValidationError as err:
+            raise GroupValidationError(err.messages) from err
 
         current_app.logger.debug(
             "Group created: '%s' by user %s", group.name, identity.id
@@ -96,8 +98,11 @@ class GroupsService(RecordService):
         except ValidationError as err:
             raise GroupValidationError(err.messages) from err
 
-        # Update group using API
-        group = group.update(data, id_)
+        try:
+            # Update group using API
+            group = group.update(data, id_)
+        except ValidationError as err:
+            raise GroupValidationError(err.messages) from err
         current_app.logger.debug(
             "Group updated: '%s' by user %s", group.name, identity.id
         )
