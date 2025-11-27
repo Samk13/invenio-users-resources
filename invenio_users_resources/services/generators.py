@@ -3,7 +3,7 @@
 # Copyright (C) 2022 TU Wien.
 # Copyright (C) 2022 CERN.
 # Copyright (C) 2023 Graz University of Technology.
-# Copyright (C) 2024 KTH Royal Institute of Technology.
+# Copyright (C) 2024-2025 KTH Royal Institute of Technology.
 # Copyright (C) 2025 Ubiquity Press.
 #
 # Invenio-Users-Resources is free software; you can redistribute it and/or

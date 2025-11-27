@@ -276,7 +276,7 @@ USERS_RESOURCES_PROTECTED_GROUP_NAMES = [
     "administration",
     "administration-moderation",
 ]
-"""Group identifiers that cannot be mutated via the public API (system process only)."""
+"""Group identifiers that cannot be mutated via API (system process only)."""
 
 
 class OrgPropsSchema(Schema):
