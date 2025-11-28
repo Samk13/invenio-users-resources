@@ -86,7 +86,7 @@ class GroupsService(RecordService):
         group = GroupAggregate.get_record(id_)
         if group is None:
             raise PermissionDeniedError()
-        self.require_permission(identity, "update", record=group)
+        self.require_permission(identity, "update", record=group, update_grp=data)
 
         try:
             data, errors = self.schema.load(

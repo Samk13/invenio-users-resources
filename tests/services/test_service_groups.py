@@ -306,7 +306,7 @@ def test_protected_group_cannot_become_protected(
     """Renaming a group into a protected identifier is blocked for admins."""
 
     previous = app.config["USERS_RESOURCES_PROTECTED_GROUP_NAMES"]
-    app.config["USERS_RESOURCES_PROTECTED_GROUP_NAMES"] = ["protected-admin-alt"]
+    app.config["USERS_RESOURCES_PROTECTED_GROUP_NAMES"] = ["protected-admin-role"]
 
     created = group_service.create(
         user_moderator.identity,
@@ -314,24 +314,23 @@ def test_protected_group_cannot_become_protected(
     ).to_dict()
 
     try:
-        # FIXME: they should raise permission denied errors
-        # with pytest.raises(PermissionDeniedError):
-        #     group_service.update(
-        #         user_moderator.identity,
-        #         created["id"],
-        #         {"name": "protected-admin-alt"},
-        #     )
-        # with pytest.raises(PermissionDeniedError):
-        #     group_service.update(
-        #         user_admin.identity,
-        #         created["id"],
-        #         {"name": "protected-admin-alt"},
-        #     )
+        with pytest.raises(PermissionDeniedError):
+            group_service.update(
+                user_moderator.identity,
+                created["id"],
+                {"name": "protected-admin-role"},
+            )
+        with pytest.raises(PermissionDeniedError):
+            group_service.update(
+                user_admin.identity,
+                created["id"],
+                {"name": "protected-admin-role"},
+            )
 
         result = group_service.update(
-            system_identity, created["id"], {"name": "protected-admin-alt"}
+            system_identity, created["id"], {"name": "protected-admin-role"}
         ).to_dict()
-        assert result["name"] == "protected-admin-alt"
+        assert result["name"] == "protected-admin-role"
     finally:
         app.config["USERS_RESOURCES_PROTECTED_GROUP_NAMES"] = previous
         group_service.delete(system_identity, created["id"])
