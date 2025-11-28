@@ -191,8 +191,12 @@ class ProtectedGroupIdentifiers(Generator):
         if not protected or record is None:
             return False
 
-        values = [getattr(record, "id", None), getattr(record, "name", None)]
-
+        values = [
+            getattr(record, "id", None),
+            getattr(record, "name", None),
+            record.get("name", None),
+            record.get("id", None),
+        ]
         candidates = {str(val) for val in values if val is not None}
         return bool(set(protected).intersection(candidates))
 
