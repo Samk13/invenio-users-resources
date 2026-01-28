@@ -10,7 +10,6 @@
 
 """User roles/groups resource config."""
 
-
 import marshmallow as ma
 from flask_resources import HTTPJSONException
 from invenio_records_resources.errors import validation_error_to_list_errors
