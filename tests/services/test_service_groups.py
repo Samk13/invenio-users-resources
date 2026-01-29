@@ -13,6 +13,7 @@ from operator import attrgetter
 from uuid import UUID
 
 import pytest
+from invenio_access import ActionRoles, superuser_access
 from invenio_access.permissions import system_identity
 from invenio_records_resources.resources.errors import PermissionDeniedError
 
@@ -391,3 +392,55 @@ def test_groups_recreate_same_name(app, group_service):
     assert payload["name"] == recreated["name"]
 
     assert group_service.delete(system_identity, recreated["id"])
+
+
+def test_super_admin_can_manage_groups(app, group_service, user_admin):
+    """Super users can update and delete managed groups."""
+
+    payload = {
+        "name": "superuser-managed-role",
+        "description": "temp description",
+    }
+
+    # Created by system to focus the check on super user capabilities
+    created = group_service.create(system_identity, payload).to_dict()
+
+    updated = group_service.update(
+        user_admin.identity,
+        created["id"],
+        {"description": "updated by superuser"},
+    ).to_dict()
+    assert updated["description"] == "updated by superuser"
+
+    assert group_service.delete(user_admin.identity, created["id"])
+
+
+def test_super_admin_loses_manage_when_superuser_removed(
+    app, group_service, user_admin, group, superadmin_group, database
+):
+    """Removing superuser access strips manage permissions for managed groups."""
+
+    # Drop the superuser action from the superadmin role
+    action_role = (
+        ActionRoles.query_by_action(superuser_access)
+        .filter_by(role_id=superadmin_group.id)
+        .one()
+    )
+    database.session.delete(action_role)
+    database.session.commit()
+
+    try:
+        with pytest.raises(PermissionDeniedError):
+            group_service.update(
+                user_admin.identity,
+                group.id,
+                {"description": "should not be allowed"},
+            )
+
+        with pytest.raises(PermissionDeniedError):
+            group_service.delete(user_admin.identity, group.id)
+    finally:
+        # Restore superuser access to keep other tests intact
+        restored = ActionRoles.create(action=superuser_access, role=superadmin_group)
+        database.session.add(restored)
+        database.session.commit()
