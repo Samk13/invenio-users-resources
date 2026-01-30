@@ -104,6 +104,7 @@ class UserSchema(BaseRecordSchema, FieldPermissionsMixin):
     }
 
     # NOTE: API should only deliver users that are active & confirmed
+    id = fields.Str(dump_only=True)
     active = fields.Boolean()
     confirmed = fields.Boolean(dump_only=True)
     blocked = fields.Boolean(dump_only=True)
@@ -113,7 +114,7 @@ class UserSchema(BaseRecordSchema, FieldPermissionsMixin):
     is_current_user = fields.Method("is_self", dump_only=True)
 
     email = fields.Email(required=True)
-    domain = fields.String()
+    domain = fields.String(dump_only=True)
     domaininfo = fields.Nested(DomainInfoSchema)
     identities = fields.Nested(IdentitiesSchema, dump_default={})
     username = fields.String(validate=validate_username)
@@ -143,6 +144,7 @@ class UserSchema(BaseRecordSchema, FieldPermissionsMixin):
 class GroupSchema(BaseRecordSchema):
     """Schema for user groups."""
 
+    id = fields.Str(dump_only=True)
     name = fields.String(
         required=True,
         validate=[

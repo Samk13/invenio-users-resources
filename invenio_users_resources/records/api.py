@@ -266,9 +266,6 @@ class UserAggregate(BaseAggregate):
     def create(cls, data, id_=None, validator=None, format_checker=None, **kwargs):
         """Create a new User and store it in the database."""
         try:
-            #  Admin group view passes in an empty string as id, which will be a valid Role id.
-            if "id" in data and data["id"] == "":
-                data.pop("id")
             # Check if email and  username already exists by another account.
             _validate_user_data(data)
             # Create User
