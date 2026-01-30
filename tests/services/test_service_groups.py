@@ -47,8 +47,8 @@ def test_groups_no_facets(app, group, group_service):
 
 def test_groups_fixed_pagination(app, groups, group_service):
     res = group_service.search(system_identity, params={"size": 1, "page": 2})
-    assert 1 == res.pagination.page
-    assert 10 == res.pagination.size
+    assert 2 == res.pagination.page
+    assert 1 == res.pagination.size
 
 
 @pytest.mark.parametrize(
